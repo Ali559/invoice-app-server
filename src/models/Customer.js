@@ -31,4 +31,4 @@ export const Customer = sequelize.define("Customer", {
     },
 });
 
-Customer.hasMany(Invoice, { foreignKey: "customer_id" });
+// Customer.hasMany(Invoice, { foreignKey: "customer_id" });

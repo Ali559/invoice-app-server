@@ -1,8 +1,9 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
-import { Customer } from "./Customer.js";
-import { InvoiceLine } from "./InvoiceLine.js";
-import { handlePreInvoiceCreation } from "../helpers/hooks.js";
+import {
+    handleAfterInvoiceCreation,
+    handlePreInvoiceCreation,
+} from "../helpers/hooks.js";
 
 export const Invoice = sequelize.define(
     "Invoice",
@@ -21,6 +22,11 @@ export const Invoice = sequelize.define(
             allowNull: false,
             defaultValue: DataTypes.NOW,
         },
+        tax_amount: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: false,
+            defaultValue: 0.0,
+        },
         invoice_total: {
             type: DataTypes.FLOAT,
             allowNull: false,
@@ -29,16 +35,7 @@ export const Invoice = sequelize.define(
     {
         hooks: {
             beforeCreate: handlePreInvoiceCreation,
-            afterCreate: async (invoice, options) => {
-                // Reduce customer balance
-                const customer = await Customer.findByPk(invoice.customer_id);
-                customer.balance -= invoice.invoice_total;
-                await customer.save();
-            },
+            afterCreate: handleAfterInvoiceCreation,
         },
     },
 );
-
-Invoice.hasMany(InvoiceLine, { foreignKey: "invoice_id" });
-
-Invoice.belongsTo(Customer, { foreignKey: "customer_id" });

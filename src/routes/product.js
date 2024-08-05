@@ -6,8 +6,8 @@ const productRouter = express.Router();
 
 // Create a new product
 productRouter.post("/", async (req, res) => {
-    const { name, quantityOnHand, price, supplier, barcode } = req.body;
     try {
+        const { name, quantityOnHand, price, supplier, barcode } = req.body;
         const savedProduct = await Product.create({
             name,
             quantityOnHand,
@@ -17,9 +17,39 @@ productRouter.post("/", async (req, res) => {
         });
         res.status(201).json(savedProduct);
     } catch (error) {
-        return res
-            .status(500)
-            .json({ status: "Error", message: "Something went wrong" });
+        return res.status(500).json({
+            status: "Error",
+            message: `Something went wrong ${error.message}`,
+        });
+    }
+});
+
+// GET Product by Id
+productRouter.get("/:productId", async (req, res) => {
+    try {
+        const product = await Product.findByPk(req.params.productId);
+        res.status(200).json(product);
+    } catch (error) {
+        return res.status(500).json({
+            status: "Error",
+            message: `Something went wrong ${error.message}`,
+        });
+    }
+});
+
+// GET All products with pagination
+productRouter.get("/", async (req, res) => {
+    try {
+        const products = await Product.findAndCountAll({
+            limit: 10,
+            offset: 0,
+        });
+        res.status(200).json({ products });
+    } catch (error) {
+        return res.status(500).json({
+            status: "Error",
+            message: `Something went wrong ${error.message}`,
+        });
     }
 });
 
@@ -74,9 +104,10 @@ productRouter.patch("/:productId", async (req, res) => {
             .status(201)
             .json({ message: "Product updated successfully", result });
     } catch (error) {
-        return res
-            .status(500)
-            .json({ status: "Error", message: "Something went wrong" });
+        return res.status(500).json({
+            status: "Error",
+            message: `Something went wrong ${error.message}`,
+        });
     }
 });
 
@@ -90,9 +121,10 @@ productRouter.delete("/:productId", async (req, res) => {
             .status(201)
             .json({ message: "Product updated successfully", result });
     } catch (error) {
-        return res
-            .status(500)
-            .json({ status: "Error", message: "Something went wrong" });
+        return res.status(500).json({
+            status: "Error",
+            message: `Something went wrong ${error.message}`,
+        });
     }
 });
 

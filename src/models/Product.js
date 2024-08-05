@@ -1,7 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { InvoiceLine } from "./InvoiceLine.js";
-import { Supplier } from "./Supplier.js";
 
 export const Product = sequelize.define("Product", {
     product_id: {
@@ -37,5 +36,4 @@ export const Product = sequelize.define("Product", {
     },
 });
 
-Product.hasMany(InvoiceLine, { foreignKey: "product_id" });
 
