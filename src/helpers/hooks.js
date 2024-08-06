@@ -1,61 +1,53 @@
 import { sequelize } from "../config/database.js";
+import { ENV } from "../config/env.js";
 import { Customer } from "../models/Customer.js";
-import { Invoice } from "../models/Invoice.js";
-import { InvoiceLine } from "../models/InvoiceLine.js";
 import { Product } from "../models/Product.js";
 
-export const handlePreInvoiceCreation = async (invoice, options) => {
+export const handlePreInvoiceCreation = async (invoice, otpions) => {
     try {
-        const customer = await Customer.findByPk(invoice.customer_id);
-        if (customer.balance < invoice.total_amount) {
-            throw new Error("Customer has Insuffecient balance");
-        }
-        const date = new Date(invoice.invoiceDate);
-        const year = date.getFullYear();
-
-        // Get the count of invoices for the current year
-        const count = await Invoice.count({
-            where: {
-                date: {
-                    [sequelize.Op.gte]: new Date(`${year}-01-01`),
-                    [sequelize.Op.lt]: new Date(`${year + 1}-01-01`),
-                },
-            },
-        });
-
-        const newCount = count + 1;
-        const formattedCount = String(newCount).padStart(3, "0");
-
-        invoice.invoice_id = `${year}-${formattedCount}`;
-
-        const [results] = await sequelize.query(
-            "CALL CalculateTaxAndGrandTotal(:totalAmount, @taxAmount, @grandTotal); " +
-                "SELECT @taxAmount AS taxAmount, @grandTotal AS grandTotal;",
+        const results = await sequelize.query(
+            `CALL ${ENV.DB_NAME}.CalculateTaxAndGrandTotal(:totalAmount, @taxAmount, @grandTotal);`,
             {
-                replacements: { totalAmount: invoice.total_amount },
+                replacements: { totalAmount: Number(invoice.invoice_total) },
             },
         );
-
-        const taxData = results[1][0];
-        invoice.tax_amount = taxData.taxAmount;
-        invoice.grand_total = taxData.grandTotal;
-
-        await invoice.save();
+        const taxData = results[0];
+        const customer = await Customer.findByPk(invoice.customer_id);
+        if (customer.balance < taxData.grandTotal) {
+            return Promise.reject(
+                new Error("Customer has insuffecient balance"),
+            );
+        }
     } catch (error) {
-        throw new Error(error);
+        return Promise.reject(new Error(error));
     }
 };
-
 export const handleAfterInvoiceCreation = async (invoice, options) => {
     // Reduce customer balance
     try {
+        const results = await sequelize.query(
+            `CALL ${ENV.DB_NAME}.CalculateTaxAndGrandTotal(:totalAmount, @taxAmount, @grandTotal);`,
+            {
+                replacements: { totalAmount: Number(invoice.invoice_total) },
+            },
+        );
+        const taxData = results[0];
         const customer = await Customer.findByPk(invoice.customer_id);
+        if (customer.balance < taxData.grandTotal) {
+            return Promise.reject(
+                new Error("Customer has insuffecient balance"),
+            );
+        }
 
-        customer.balance -= invoice.invoice_total;
+        customer.balance -= taxData.grandTotal;
         await customer.save();
-        await InvoiceLine.update({});
+
+        // Fetch the output variables
+        invoice.tax_amount = taxData.taxAmount;
+        invoice.invoice_total = taxData.grandTotal;
+        await invoice.save();
     } catch (error) {
-        throw new Error(error);
+        return Promise.reject(new Error(error));
     }
 };
 
@@ -75,7 +67,7 @@ export const handleAfterInvoiceLineCreation = async (invoiceLine, options) => {
             },
         );
     } catch (error) {
-        throw new Error(error);
+        return Promise.reject(new Error(error));
     }
 };
 
@@ -85,8 +77,8 @@ export const handlePreInvoiceLineCreation = async (invoiceLine, options) => {
         const isProductQuantitySuffecient =
             product.quantityOnHand > invoiceLine.quantity;
         if (!isProductQuantitySuffecient)
-            throw new Error("Insuffecient Product Quantity");
+            return Promise.reject(new Error("Insuffecient Product Quantity"));
     } catch (error) {
-        throw new Error(error);
+        return Promise.reject(new Error(error));
     }
 };

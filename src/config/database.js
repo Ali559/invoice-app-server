@@ -9,5 +9,8 @@ export const sequelize = new Sequelize(
     {
         host: ENV.DB_HOST,
         dialect: "mysql",
+        dialectOptions: {
+            multipleStatements: true,
+        },
     },
 );
