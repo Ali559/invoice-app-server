@@ -1,47 +1,85 @@
 import { Router } from "express";
 export const invoiceRouter = Router();
-import { Invoice } from "../models/Invoice.js";
-import { InvoiceLine } from "../models/InvoiceLine.js";
-import { validate } from "../middleware/validation.js";
-import { createInvoiceSchema } from "../validation/invoice.schema.js";
-invoiceRouter.post("/", validate(createInvoiceSchema), async (req, res) => {
-    try {
-        const { customer_id, products } = req.body;
-        const line_prices = products.map(
-            (product) => product.price * product.quantity,
-        );
+import { validate, validateRequestParams } from "../middleware/validation.js";
+import {
+    createInvoiceSchema,
+    updateInvoiceLineSchema,
+    updateInvoiceSchema,
+} from "../validation/invoice.schema.js";
+import invoiceController from "../controllers/invoice.controller.js";
+import Joi from "joi";
 
-        const grand_total = line_prices.reduce(
-            (sum, amount) => sum + amount,
-            0,
-        );
-        const count = await Invoice.count();
-        const newCount = count + 1;
-        const invoice_id = `${new Date().getFullYear()}-${String(
-            newCount,
-        ).padStart(3, "0")}`;
-        const invoice = await Invoice.create({
-            invoice_id,
-            customer_id,
-            invoice_total: grand_total,
-        });
-        const readyInvoiceLines = products.map((p, index) => ({
-            linePrice: line_prices[index],
-            quantity: p.quantity,
-            product_id: p.product_id,
-            invoice_id: invoice.invoice_id,
-        }));
-        const invoiceLines = await InvoiceLine.bulkCreate(readyInvoiceLines);
+invoiceRouter.post(
+    "/",
+    validate(createInvoiceSchema),
+    invoiceController.handleInvoiceCreation,
+);
 
-        res.status(201).json({
-            message: "Invoice Created Successfully",
-            invoice,
-            invoiceLines,
-        });
-    } catch (error) {
-        return res.status(500).json({
-            status: "Error",
-            message: `Something went wrong ${error.message}`,
-        });
-    }
-});
+// Update Invoice
+invoiceRouter.patch(
+    "/:invoice_id",
+    validateRequestParams(
+        Joi.object({
+            invoice_id: Joi.string()
+                .pattern(/^\d{4}-\d{3}$/)
+                .strip()
+                .required(),
+        }).required(),
+    ),
+    validate(updateInvoiceSchema),
+    invoiceController.handleInvoiceUpdate,
+);
+
+// Delete Invoice
+invoiceRouter.delete(
+    "/:invoice_id",
+    validateRequestParams(
+        Joi.object({
+            invoice_id: Joi.string()
+                .pattern(/^\d{4}-\d{3}$/)
+                .strip()
+                .required(),
+        }).required(),
+    ),
+    invoiceController.handleInvoiceDeletion,
+);
+
+// Get Invoice by Id
+invoiceRouter.get(
+    "/:invoice_id",
+    validateRequestParams(
+        Joi.object({
+            invoice_id: Joi.string()
+                .pattern(/^\d{4}-\d{3}$/)
+                .strip()
+                .required(),
+        }).required(),
+    ),
+    invoiceController.handleGettingInvoice,
+);
+
+// Get All invoices for Customer with Pagination
+invoiceRouter.get(
+    "/all/:customer_id",
+    validateRequestParams(
+        Joi.object({
+            customer_id: Joi.number().integer().strip().required(),
+        }).required(),
+    ),
+    invoiceController.handleGettingInvoicesByPaginationAndCustomerId,
+);
+
+// Update an invoiceLine
+invoiceRouter.patch(
+    "/:invoice_id/:line_id",
+    validateRequestParams(
+        Joi.object({
+            invoice_id: Joi.string()
+                .pattern(/^\d{4}-\d{3}$/)
+                .strip()
+                .required(),
+            line_id: Joi.number().integer().strip().required(),
+        }).required(),
+    ),
+    validate(updateInvoiceLineSchema),
+);

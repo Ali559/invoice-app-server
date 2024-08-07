@@ -106,7 +106,6 @@ export default Object.freeze({
             const { password } = req.body;
             const { userId, email } = req.user;
             const user = (await User.findByPk(userId)).toJSON();
-            console.log(user);
             const isPasswordCorrect = await bcrypt.compare(
                 password,
                 user.password,
