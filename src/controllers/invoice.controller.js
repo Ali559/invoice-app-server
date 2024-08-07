@@ -2,10 +2,12 @@ import { Invoice } from "../models/Invoice.js";
 import { InvoiceLine } from "../models/InvoiceLine.js";
 import { sequelize } from "../config/database.js";
 import { AppError } from "../helpers/errorHandler.js";
-import { customerBalanceCalculationAfterInvoiceUpdate } from "../helpers/helperFunctions.js";
-import { Product } from "../models/Product.js";
+import {
+    onInvoiceLineUpdate,
+    calculateProductsAfterInvoiceLineUpdate,
+    calculateProductsAfterInvoiceLineDelete,
+} from "../helpers/helperFunctions.js";
 
-// TODO Remove NewProducts from the invoice update route and put it in a different route, to ensure that everything goes smoothly
 export default Object.freeze({
     handleInvoiceCreation: async (req, res) => {
         try {
@@ -61,51 +63,20 @@ export default Object.freeze({
     handleInvoiceUpdate: async (req, res) => {
         try {
             await sequelize.transaction(async (t) => {
-                const { newProducts, invoice_date } = req.body;
+                const { invoice_date } = req.body;
                 const { invoice_id } = req.params;
-                let line_prices = [];
-                if (newProducts)
-                    line_prices.push(
-                        ...newProducts?.map(
-                            (product) => product.price * product.quantity,
-                        ),
-                    );
-                const oldInvoice = await Invoice.findByPk(invoice_id);
-                const grand_total = line_prices.length
-                    ? line_prices?.reduce((sum, amount) => sum + amount, 0)
-                    : oldInvoice.invoice_total;
-
-                await Promise.all([
-                    customerBalanceCalculationAfterInvoiceUpdate(
-                        oldInvoice,
-                        grand_total,
-                    ),
-                    Invoice.update(
-                        {
-                            invoice_id,
-                            invoice_date,
-                        },
-                        {
-                            where: { invoice_id },
-                        },
-                    ),
-                ]);
-                if (newProducts?.length || newProducts) {
-                    const readyInvoiceLines = newProducts?.map((p, index) => ({
-                        linePrice: line_prices[index],
-                        quantity: p.quantity,
-                        product_id: p.product_id,
-                        invoice_id,
-                    }));
-                    await InvoiceLine.bulkCreate(readyInvoiceLines);
-                }
+                await Invoice.update(
+                    {
+                        invoice_date,
+                    },
+                    {
+                        where: { invoice_id },
+                    },
+                );
 
                 return res.status(201).json({
                     message: "Invoice Update Successfully",
                     invoice: await Invoice.findByPk(invoice_id),
-                    invoiceLines: await InvoiceLine.findAll({
-                        where: { invoice_id },
-                    }),
                 });
             });
         } catch (error) {
@@ -207,24 +178,16 @@ export default Object.freeze({
     handleInvoiceLineUpdate: async (req, res) => {
         try {
             const { line_id, invoice_id } = req.params;
-            const { product_id, quantity, price } = req.body;
+            const { product_id, quantity, price: linePrice } = req.body;
             await sequelize.transaction(async () => {
-                const oldLine = await InvoiceLine.findByPk(line_id);
-                const product = await Product.findByPk(product_id);
-                if (product_id !== oldLine.product_id) {
-                    product.quantityOnHand += oldLine.quantity;
-                }
-                let remainder = 0;
-                if (oldLine.quantity >= quantity) {
-                    remainder = oldLine.quantity - quantity;
-                    product.quantityOnHand += remainder;
-                } else {
-                    remainder = quantity - oldLine.quantity;
-                    product.quantityOnHand -= remainder;
-                }
+                await calculateProductsAfterInvoiceLineUpdate(
+                    line_id,
+                    product_id,
+                    quantity,
+                );
                 await InvoiceLine.update(
                     {
-                        linePrice: quantity * price,
+                        linePrice,
                         product_id,
                         quantity,
                     },
@@ -234,6 +197,68 @@ export default Object.freeze({
                         },
                     },
                 );
+                await onInvoiceLineUpdate(invoice_id);
+
+                return res.status(201).json({
+                    message: "Invoice Line updated successfully",
+                    invoiceLine: await InvoiceLine.findByPk(line_id),
+                });
+            });
+        } catch (error) {
+            if (error instanceof AppError) {
+                return res.status(error.statusCode).json({
+                    status: "Error",
+                    message: `${error.message}`,
+                });
+            }
+            return res.status(500).json({
+                status: "Error",
+                message: `Something went wrong ${error.message}`,
+            });
+        }
+    },
+    handleInvoiceLineAddition: async (req, res) => {
+        try {
+            const { invoice_id } = req.params;
+            const { product_id, quantity, product_price } = req.body;
+            await sequelize.transaction(async () => {
+                await InvoiceLine.create({
+                    invoice_id,
+                    linePrice: quantity * product_price,
+                    product_id,
+                    quantity,
+                });
+                await onInvoiceLineUpdate(invoice_id);
+
+                return res.status(201).json({
+                    message: "Invoice Line updated successfully",
+                    invoiceLine: await InvoiceLine.findByPk(line_id),
+                });
+            });
+        } catch (error) {
+            if (error instanceof AppError) {
+                return res.status(error.statusCode).json({
+                    status: "Error",
+                    message: `${error.message}`,
+                });
+            }
+            return res.status(500).json({
+                status: "Error",
+                message: `Something went wrong ${error.message}`,
+            });
+        }
+    },
+    handleInvoiceLineDeletion: async (req, res) => {
+        try {
+            const { invoice_id, line_id } = req.params;
+            await sequelize.transaction(async () => {
+                await calculateProductsAfterInvoiceLineDelete(line_id);
+                await InvoiceLine.destroy({
+                    where: {
+                        invoice_line_id: line_id,
+                    },
+                });
+                await onInvoiceLineUpdate(invoice_id);
 
                 return res.status(201).json({
                     message: "Invoice Line updated successfully",

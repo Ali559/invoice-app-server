@@ -30,7 +30,7 @@ export const InvoiceLine = sequelize.define(
     },
     {
         hooks: {
-            afterBulkCreate: handleAfterInvoiceLineCreation,
+            afterCreate: handleAfterInvoiceLineCreation,
         },
     },
 );
