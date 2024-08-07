@@ -3,7 +3,7 @@ import { InvoiceLine } from "./InvoiceLine.js";
 import { Product } from "./Product.js";
 import { sequelize } from "../config/database.js";
 import { Customer } from "./Customer.js";
-// Initialize sequelize instance
+import { Supplier } from "./Supplier.js";
 
 // Define associations
 export const defineAssociations = () => {
@@ -15,6 +15,14 @@ export const defineAssociations = () => {
     InvoiceLine.belongsTo(Product, { foreignKey: "product_id" });
 
     Product.hasMany(InvoiceLine, { foreignKey: "product_id" });
+    Product.belongsTo(Supplier, {
+        foreignKey: "supplier_id",
+        onDelete: "SET NULL",
+    });
+
+    Supplier.hasMany(Product, {
+        foreignKey: "supplier_id",
+    });
     return { sequelize };
 };
 

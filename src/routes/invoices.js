@@ -2,13 +2,14 @@ import { Router } from "express";
 export const invoiceRouter = Router();
 import { validate, validateRequestParams } from "../middleware/validation.js";
 import {
+    addInvoiceLineSchema,
     createInvoiceSchema,
     updateInvoiceLineSchema,
     updateInvoiceSchema,
 } from "../validation/invoice.schema.js";
 import invoiceController from "../controllers/invoice.controller.js";
 import Joi from "joi";
-
+// Add Invoice
 invoiceRouter.post(
     "/",
     validate(createInvoiceSchema),
@@ -69,6 +70,21 @@ invoiceRouter.get(
     invoiceController.handleGettingInvoicesByPaginationAndCustomerId,
 );
 
+// Add an invoiceLine
+invoiceRouter.post(
+    "/:invoice_id",
+    validateRequestParams(
+        Joi.object({
+            invoice_id: Joi.string()
+                .pattern(/^\d{4}-\d{3}$/)
+                .strip()
+                .required(),
+        }).required(),
+    ),
+    validate(addInvoiceLineSchema),
+    invoiceController.handleInvoiceLineAddition,
+);
+
 // Update an invoiceLine
 invoiceRouter.patch(
     "/:invoice_id/:line_id",
@@ -82,4 +98,20 @@ invoiceRouter.patch(
         }).required(),
     ),
     validate(updateInvoiceLineSchema),
+    invoiceController.handleInvoiceLineUpdate,
+);
+
+// Delete an invoiceLine
+invoiceRouter.delete(
+    "/:invoice_id/:line_id",
+    validateRequestParams(
+        Joi.object({
+            invoice_id: Joi.string()
+                .pattern(/^\d{4}-\d{3}$/)
+                .strip()
+                .required(),
+            line_id: Joi.number().integer().strip().required(),
+        }).required(),
+    ),
+    invoiceController.handleInvoiceLineDeletion,
 );

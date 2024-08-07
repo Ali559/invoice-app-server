@@ -1,8 +1,8 @@
 import { rateLimit } from "express-rate-limit";
 
 export const limiter = rateLimit({
-    windowMs: 1000,
-    limit: 2, // Limit each IP to 1 request per `window` (here, per minute).
+    windowMs: 10000,
+    limit: 30,
     standardHeaders: "draft-7",
     legacyHeaders: true, // Disable the `X-RateLimit-*` headers.
     validate: true,

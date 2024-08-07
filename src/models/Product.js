@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
-import { InvoiceLine } from "./InvoiceLine.js";
 
 export const Product = sequelize.define("Product", {
     product_id: {
@@ -26,14 +25,12 @@ export const Product = sequelize.define("Product", {
         type: DataTypes.FLOAT,
         allowNull: false,
     },
-    supplier: {
-        type: DataTypes.STRING,
-        allowNull: false,
+    supplier_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
     },
     productImage: {
         type: DataTypes.STRING,
         allowNull: true,
     },
 });
-
-

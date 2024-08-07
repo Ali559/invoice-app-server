@@ -47,9 +47,8 @@ export const onInvoiceLineUpdate = async (invoice_id) => {
         const InvoiceLines = await InvoiceLine.findAll({
             where: { invoice_id },
         });
-        if (!InvoiceLines?.length || InvoiceLines) return;
+        if (!InvoiceLines?.length || !InvoiceLines) return;
         const oldInvoice = await Invoice.findByPk(invoice_id);
-
         const line_prices = InvoiceLines.map((line) => line.linePrice);
         const grand_total = line_prices.reduce(
             (sum, amount) => sum + amount,
@@ -61,13 +60,12 @@ export const onInvoiceLineUpdate = async (invoice_id) => {
     }
 };
 
-export const calculateProductsAfterInvoiceLineUpdate = async (
-    line_id,
+export const calculateProductsOnInvoiceLineUpdate = async (
+    oldLine,
     product_id,
     quantity,
 ) => {
     try {
-        const oldLine = await InvoiceLine.findByPk(line_id);
         const product = await Product.findByPk(product_id);
         if (product_id !== oldLine.product_id) {
             product.quantityOnHand += oldLine.quantity;

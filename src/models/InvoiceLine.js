@@ -1,6 +1,9 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/database.js";
-import { handleAfterInvoiceLineCreation } from "../helpers/hooks.js";
+import {
+    handleAfterInvoiceLineBulkCreation,
+    handleAfterInvoiceLineCreation,
+} from "../helpers/hooks.js";
 
 export const InvoiceLine = sequelize.define(
     "InvoiceLine",
@@ -31,6 +34,7 @@ export const InvoiceLine = sequelize.define(
     {
         hooks: {
             afterCreate: handleAfterInvoiceLineCreation,
+            afterBulkCreate: handleAfterInvoiceLineBulkCreation,
         },
     },
 );

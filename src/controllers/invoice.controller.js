@@ -4,7 +4,7 @@ import { sequelize } from "../config/database.js";
 import { AppError } from "../helpers/errorHandler.js";
 import {
     onInvoiceLineUpdate,
-    calculateProductsAfterInvoiceLineUpdate,
+    calculateProductsOnInvoiceLineUpdate,
     calculateProductsAfterInvoiceLineDelete,
 } from "../helpers/helperFunctions.js";
 
@@ -158,9 +158,25 @@ export default Object.freeze({
                     }),
                 ),
             );
+
+            const result = [];
+            invoices.rows.forEach((invoice, i) => {
+                result.push({
+                    invoice_id: invoice.invoice_id,
+                    customer_id: invoice.customer_id,
+                    invoice_date: invoice.invoice_date,
+                    tax_amount: invoice.tax_amount,
+                    invoice_total: invoice.invoice_total,
+                    createdAt: invoice.createdAt,
+                    updatedAt: invoice.updatedAt,
+                    invoiceLines: invoiceLines[i].rows.filter(
+                        (line) => line.invoice_id === invoice.invoice_id,
+                    ),
+                });
+            });
+
             return res.status(200).json({
-                invoices,
-                invoiceLines,
+                result,
             });
         } catch (error) {
             if (error instanceof AppError) {
@@ -178,16 +194,12 @@ export default Object.freeze({
     handleInvoiceLineUpdate: async (req, res) => {
         try {
             const { line_id, invoice_id } = req.params;
-            const { product_id, quantity, price: linePrice } = req.body;
+            const { product_id, quantity, price } = req.body;
             await sequelize.transaction(async () => {
-                await calculateProductsAfterInvoiceLineUpdate(
-                    line_id,
-                    product_id,
-                    quantity,
-                );
+                const oldLine = await InvoiceLine.findByPk(line_id);
                 await InvoiceLine.update(
                     {
-                        linePrice,
+                        linePrice: price * quantity,
                         product_id,
                         quantity,
                     },
@@ -197,10 +209,16 @@ export default Object.freeze({
                         },
                     },
                 );
+                await calculateProductsOnInvoiceLineUpdate(
+                    oldLine,
+                    product_id,
+                    quantity,
+                );
                 await onInvoiceLineUpdate(invoice_id);
 
                 return res.status(201).json({
                     message: "Invoice Line updated successfully",
+                    invoice: await Invoice.findByPk(invoice_id),
                     invoiceLine: await InvoiceLine.findByPk(line_id),
                 });
             });
@@ -222,7 +240,7 @@ export default Object.freeze({
             const { invoice_id } = req.params;
             const { product_id, quantity, product_price } = req.body;
             await sequelize.transaction(async () => {
-                await InvoiceLine.create({
+                const line = await InvoiceLine.create({
                     invoice_id,
                     linePrice: quantity * product_price,
                     product_id,
@@ -232,7 +250,8 @@ export default Object.freeze({
 
                 return res.status(201).json({
                     message: "Invoice Line updated successfully",
-                    invoiceLine: await InvoiceLine.findByPk(line_id),
+                    invoice: await Invoice.findByPk(invoice_id),
+                    invoiceLine: line,
                 });
             });
         } catch (error) {
@@ -261,8 +280,7 @@ export default Object.freeze({
                 await onInvoiceLineUpdate(invoice_id);
 
                 return res.status(201).json({
-                    message: "Invoice Line updated successfully",
-                    invoiceLine: await InvoiceLine.findByPk(line_id),
+                    message: "Invoice Line Deleted successfully",
                 });
             });
         } catch (error) {
