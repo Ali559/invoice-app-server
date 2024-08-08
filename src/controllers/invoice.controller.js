@@ -251,7 +251,7 @@ export default Object.freeze({
                 return res.status(201).json({
                     message: "Invoice Line updated successfully",
                     invoice: await Invoice.findByPk(invoice_id),
-                    invoiceLine: line,
+                    invoiceLines: line,
                 });
             });
         } catch (error) {

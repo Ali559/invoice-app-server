@@ -32,7 +32,7 @@ userRouter.patch(
     "/change-password",
     validate(changePasswordSchema),
     isAuthenticated,
-    userController.handleTokenRefresh,
+    userController.handlePasswordChange,
 );
 
 userRouter.delete(

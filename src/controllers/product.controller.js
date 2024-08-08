@@ -75,7 +75,6 @@ export default Object.freeze({
             if (!product) {
                 return res.status(404).json({ message: "Product not found" });
             }
-
             // Update the productImage field with the name of the uploaded file
             product.productImage = req.file.filename;
             const updatedProduct = await product.save();

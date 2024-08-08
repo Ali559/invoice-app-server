@@ -6,7 +6,10 @@ export const createCustomerSchema = Joi.object({
     address: Joi.string().strip().max(100).required(),
     phone: Joi.string()
         .strip()
-        .pattern(/^\+(\d{1,3})\s?\d{4,14}$/)
+        .regex(/^\+(\d{1,3})\s?\d{4,14}$/)
+        .message(
+            "This field should be a valid phone Number with the country code",
+        )
         .required(),
     balance: Joi.number().options({ convert: false }).strip().required(),
 });
@@ -17,7 +20,10 @@ export const updateCustomerSchema = Joi.object({
     address: Joi.string().strip().max(100).optional(),
     phone: Joi.string()
         .strip()
-        .pattern(/^\+(\d{1,3})\s?\d{4,14}$/)
+        .regex(/^\+(\d{1,3})\s?\d{4,14}$/)
+        .message(
+            "This field should be a valid phone Number with the country code",
+        )
         .optional(),
     balance: Joi.number().options({ convert: false }).strip().optional(),
 });

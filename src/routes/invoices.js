@@ -22,7 +22,8 @@ invoiceRouter.patch(
     validateRequestParams(
         Joi.object({
             invoice_id: Joi.string()
-                .pattern(/^\d{4}-\d{3}$/)
+                .regex(/^\d{4}-\d{3}$/)
+
                 .strip()
                 .required(),
         }).required(),
@@ -37,7 +38,8 @@ invoiceRouter.delete(
     validateRequestParams(
         Joi.object({
             invoice_id: Joi.string()
-                .pattern(/^\d{4}-\d{3}$/)
+                .regex(/^\d{4}-\d{3}$/)
+
                 .strip()
                 .required(),
         }).required(),
@@ -51,7 +53,8 @@ invoiceRouter.get(
     validateRequestParams(
         Joi.object({
             invoice_id: Joi.string()
-                .pattern(/^\d{4}-\d{3}$/)
+                .regex(/^\d{4}-\d{3}$/)
+
                 .strip()
                 .required(),
         }).required(),
@@ -76,7 +79,8 @@ invoiceRouter.post(
     validateRequestParams(
         Joi.object({
             invoice_id: Joi.string()
-                .pattern(/^\d{4}-\d{3}$/)
+                .regex(/^\d{4}-\d{3}$/)
+
                 .strip()
                 .required(),
         }).required(),
@@ -91,7 +95,8 @@ invoiceRouter.patch(
     validateRequestParams(
         Joi.object({
             invoice_id: Joi.string()
-                .pattern(/^\d{4}-\d{3}$/)
+                .regex(/^\d{4}-\d{3}$/)
+
                 .strip()
                 .required(),
             line_id: Joi.number().integer().strip().required(),
@@ -107,7 +112,8 @@ invoiceRouter.delete(
     validateRequestParams(
         Joi.object({
             invoice_id: Joi.string()
-                .pattern(/^\d{4}-\d{3}$/)
+                .regex(/^\d{4}-\d{3}$/)
+
                 .strip()
                 .required(),
             line_id: Joi.number().integer().strip().required(),

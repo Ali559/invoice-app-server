@@ -11,6 +11,7 @@ import {
 import Joi from "joi";
 import { paginationParams } from "../validation/common.schema.js";
 import productController from "../controllers/product.controller.js";
+import { upload } from "../config/fileUploader.js";
 const productRouter = express.Router();
 
 // Create a new product
@@ -41,6 +42,7 @@ productRouter.get(
 // Upload an image and update the productImage field
 productRouter.post(
     "/upload/:productId",
+    upload.single("productImage"),
     validateRequestParams(
         Joi.object({
             productId: Joi.number().integer().strip().required(),

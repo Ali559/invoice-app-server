@@ -78,22 +78,33 @@ export default Object.freeze({
     },
 
     handlePasswordChange: async (req, res) => {
-        const user = req.user;
-        const { newPassword } = req.body;
         try {
+            const { newPassword, oldPassword } = req.body;
+            const { userId, email } = req.user;
+            const user = await User.findByPk(userId);
+            const isPasswordCorrect = await bcrypt.compare(
+                oldPassword,
+                user.password,
+            );
+            if (!isPasswordCorrect)
+                return res.status(403).json({
+                    status: "Error",
+                    message: "The oldPassword you entered is incorrect",
+                });
             const newPasswordEncrypted = await bcrypt.hash(newPassword, 10);
             await User.update(
                 {
                     password: newPasswordEncrypted,
                 },
                 {
-                    where: { email: user.email, id: user.userId },
+                    where: { email, id: userId },
                 },
             );
             return res.status(201).json({
                 message: "password Updated Successfully",
             });
         } catch (error) {
+            console.log(error);
             return res.status(500).json({
                 status: "Error",
                 message: `Something went wrong ${error.message}`,

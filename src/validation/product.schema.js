@@ -24,7 +24,4 @@ export const updateProductSchema = Joi.object({
     price: Joi.number().options({ convert: false }).optional(),
     supplier_id: Joi.number().integer().options({ convert: false }).optional(),
     barcode: Joi.string().strip().optional().max(200),
-}).or("name", "quantityOnHand", "price", "supplier", "barcode");
-
-
-
+});
