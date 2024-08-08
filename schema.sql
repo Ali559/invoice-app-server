@@ -33,7 +33,7 @@ CREATE TABLE `Customers` (
   `updatedAt` datetime NOT NULL,
   PRIMARY KEY (`customer_id`),
   UNIQUE KEY `customer_id` (`customer_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,7 +69,7 @@ DROP TABLE IF EXISTS `Invoices`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Invoices` (
   `invoice_id` varchar(255) NOT NULL,
-  `customer_id` int NOT NULL,
+  `customer_id` int DEFAULT NULL,
   `invoice_date` datetime NOT NULL,
   `tax_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `invoice_total` float NOT NULL,
@@ -77,8 +77,8 @@ CREATE TABLE `Invoices` (
   `updatedAt` datetime NOT NULL,
   PRIMARY KEY (`invoice_id`),
   UNIQUE KEY `invoice_id` (`invoice_id`),
-  KEY `customer_id` (`customer_id`),
-  CONSTRAINT `invoices_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `Customers` (`customer_id`) ON UPDATE CASCADE
+  KEY `invoices_ibfk_1` (`customer_id`),
+  CONSTRAINT `invoices_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `Customers` (`customer_id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -192,4 +192,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-08-08  2:14:24
+-- Dump completed on 2024-08-08 15:12:49

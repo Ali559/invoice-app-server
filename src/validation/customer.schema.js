@@ -1,0 +1,23 @@
+import Joi from "joi";
+
+export const createCustomerSchema = Joi.object({
+    firstName: Joi.string().strip().max(50).required(),
+    lastName: Joi.string().strip().max(50).required(),
+    address: Joi.string().strip().max(100).required(),
+    phone: Joi.string()
+        .strip()
+        .pattern(/^\+(\d{1,3})\s?\d{4,14}$/)
+        .required(),
+    balance: Joi.number().options({ convert: false }).strip().required(),
+});
+
+export const updateCustomerSchema = Joi.object({
+    firstName: Joi.string().strip().max(50).optional(),
+    lastName: Joi.string().strip().max(50).optional(),
+    address: Joi.string().strip().max(100).optional(),
+    phone: Joi.string()
+        .strip()
+        .pattern(/^\+(\d{1,3})\s?\d{4,14}$/)
+        .optional(),
+    balance: Joi.number().options({ convert: false }).strip().optional(),
+});
