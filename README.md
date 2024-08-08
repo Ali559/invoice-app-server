@@ -5,21 +5,77 @@ This Invoicing App allows users to manage customers, suppliers, products, invoic
 ## Prerequisites
 
 -   **Node.js**: Version >= 18.16.1 is required. Anything below this version is not supported.
--   **pnpm**: Ensure you have pnpm installed globally on your machine.
+-   **pnpm**: Ensure you have `pnpm` installed globally on your machine.
+-   **MySQL CLI**: Make sure the MySQL CLI is installed on your system.
 
 ### Installing pnpm
 
 If you don't have `pnpm` installed, you can install it globally using npm:
 
-bash
+```bash
 npm install -g pnpm
+```
+
+### Installing MySQL CLI
+
+#### macOS
+
+If you're on macOS, you can install MySQL using Homebrew:
+
+```bash
+brew install mysql
+```
+
+After installation, start the MySQL server:
+
+```bash
+brew services start mysql
+```
+
+#### Windows
+
+1. Download the MySQL installer from the [official MySQL website](https://dev.mysql.com/downloads/installer/).
+2. Run the installer and follow the setup instructions.
+3. Make sure to select "MySQL Server" and "MySQL Command Line Client" during installation.
+4. Once installed, you can access the MySQL CLI from the command prompt by typing:
+
+```bash
+mysql -u root -p
+```
+
+#### Linux
+
+For Ubuntu or other Debian-based distributions, you can install MySQL using APT:
+
+```bash
+sudo apt update
+sudo apt install mysql-server
+```
+
+For CentOS or RHEL-based distributions, use YUM:
+
+```bash
+sudo yum install mysql-server
+```
+
+After installation, start the MySQL service:
+
+```bash
+sudo service mysql start
+```
+
+Once MySQL is installed, you can access the MySQL CLI by typing:
+
+```bash
+mysql -u root -p
+```
 
 ## Getting Started
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Ali559/invoice-app-server.git
+git clone https://your-repo-url.git
 cd your-repo-directory
 ```
 
@@ -90,3 +146,17 @@ Postman environment link: [Invoicing App Postman Environment](https://www.postma
 -   The app is configured with strict rules to prevent XSS attacks using the `xss` library.
 -   Best practices are followed to prevent SQL injection attacks, particularly with the use of `sequelize` and input validation with `joi`.
 -   Helmet is used to set security-related HTTP headers.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request for any features, bug fixes, or improvements.
+
+## License
+
+This project is licensed under the MIT License.
+
+This version includes detailed instructions on how to install the MySQL CLI across different operating systems.
+
+```
+
+```
