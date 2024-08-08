@@ -75,8 +75,8 @@ mysql -u root -p
 ### 1. Clone the Repository
 
 ```bash
-git clone https://your-repo-url.git
-cd your-repo-directory
+git https://github.com/Ali559/invoice-app-server.git
+cd invoice-app-server
 ```
 
 ### 2. Install Dependencies
