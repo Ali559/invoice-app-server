@@ -125,6 +125,37 @@ The API is hosted on port `3000` by default. If you change the port in the `.env
 
 Postman environment link: [Invoicing App Postman Environment](https://www.postman.com/winter-station-75088/workspace/team-workspace/documentation/8410937-fc937947-6e8a-4b3e-99c2-b73733c7267d)
 
+### 7. Changing Tax Rate and Threshold
+
+To update the `tax_rate` and `tax_threshold` without redeploying the server, you can modify the `CalculateTaxAndGrandTotal` stored procedure directly in the database. After the database has been migrated:
+
+```sql
+DELIMITER ;;
+    CREATE DEFINER=`root`@`localhost` PROCEDURE `CalculateTaxAndGrandTotal`(
+    IN totalAmount DECIMAL(10, 2),
+    OUT taxAmount DECIMAL(10, 2),
+    OUT grandTotal DECIMAL(10, 2)
+    )
+    BEGIN
+    DECLARE tax_rate DECIMAL(5, 2);
+    DECLARE tax_threshold DECIMAL(10, 2) ;
+
+    set tax_rate = 5.0;
+    set tax_threshold =50.0;
+    IF totalAmount >= tax_threshold THEN
+    SET taxAmount = (totalAmount * tax_rate) / 100;
+    ELSE
+    SET taxAmount = 0.0;
+    END IF;
+
+    SET grandTotal = totalAmount + taxAmount;
+    SELECT grandTotal, taxAmount;
+    END ;;
+DELIMITER ;
+```
+
+You can update the `tax_rate` and `tax_threshold` values as needed.
+
 ## Packages Used
 
 -   **bcryptjs**: For hashing passwords securely.
@@ -146,3 +177,25 @@ Postman environment link: [Invoicing App Postman Environment](https://www.postma
 -   The app is configured with strict rules to prevent XSS attacks using the `xss` library.
 -   Best practices are followed to prevent SQL injection attacks, particularly with the use of `sequelize` and input validation with `joi`.
 -   Helmet is used to set security-related HTTP headers.
+
+## Folder Structure
+
+```
+src/
+│
+├── config/
+│   └── ...
+├── controllers/
+│   └── ...
+├── helpers/
+│   └── ...
+├── middleware/
+│   └── ...
+├── models/
+│   └── ...
+├── routes/
+│   └── ...
+├── validation/
+│   └── ...
+└── app.js
+```
